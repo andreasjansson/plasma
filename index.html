@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL Shader</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; width: 100%; height: 100%; }
+        form {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 50%;
+            min-width: 500px;
+            background-color: white;
+            border: 1px solid black;
+            padding: 20px;
+            font-family: sans-serif;
+            font-size: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+        }
+        input {
+            margin-bottom: 15px;
+        }
+        textarea {
+            font-size: 16px;
+            width: 100%;
+        }
+        em {
+            display: block;
+            color: #555;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<canvas id="glcanvas"></canvas>
+<form id="shaderForm">
+    <label>Effect source:</label>
+    <textarea id="effectSource" rows="4" cols="50">vec2 effect(vec2 p, float i, float time) {
+    return vec2(sin(p.x * i + time) * cos(p.y * i + time), sin(length(p.x)) * cos(length(p.y)));
+}</textarea>
+    <em>Try the <a target="_blank" href="https://replicate.com/andreasjansson/codellama-7b-instruct-gguf/versions/f017a401d8f2f15896f8d9c8fb605d873ac521149394033b62e51aae13146113?prediction=nc3dde3bzzp6g7ij454qon7e3u">generator</a></em>
+    <label>Speed:</label>
+    <input type="number" id="speed" value="0.2" step="0.01"><br>
+    <label>Resolution:</label>
+    <input type="number" id="resolution" value="4.0" step="0.1"><br>
+    <label>Recursion depth:</label>
+    <input type="number" id="depth" value="5" step="1" min="1" max="200"><br>
+    <input type="submit" value="Update shader">
+</form>
+<script type="text/javascript">
+    var canvas = document.getElementById('glcanvas');
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+    if (!gl) {
+        alert('Unable to initialize WebGL. Your browser may not support it.');
+        throw 'Unable to initialize WebGL';
+    }
+
+    var vertexShaderSource = `
+        attribute vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    `;
+
+    var shaderProgram, positionLocation, iResolutionLocation, iTimeLocation;
+    var positionBuffer = gl.createBuffer();
+
+    function resizeCanvasToDisplaySize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+            gl.viewport(0, 0, width, height);
+            return true;
+        }
+      gl.viewport(0, 0, width, height);
+        return true;
+    }
+
+  function getFragmentShaderSource(effectSource, speed, resolution, depth) {
+    console.log("depth", depth);
+        return `
+            precision mediump float;
+            uniform vec2 iResolution;
+            uniform float iTime;
+
+            vec3 color1 = vec3(235.0/255.0, 231.0/255.0, 92.0/255.0);
+            vec3 color2 = vec3(223.0/255.0, 72.0/255.0, 67.0/255.0);
+            vec3 color3 = vec3(235.0/255.0, 64.0/255.0, 240.0/255.0);
+
+            ${effectSource}
+
+            void main() {
+                vec2 p = (2.0 * gl_FragCoord.xy - iResolution.xy) / max(iResolution.x, iResolution.y);
+                p *= float(${resolution});
+                for (int i = 1; i < ${depth}; i++) {
+                    float fi = float(i);
+                    p += effect(p, fi, iTime * float(${speed}));
+                }
+                vec3 col = mix(mix(color1, color2, 1.0-sin(p.x)), color3, cos(p.y+p.x));
+                gl_FragColor = vec4(col, 1.0);
+            }
+        `;
+    }
+
+    function createShaderProgram(effectSource, speed, resolution, depth) {
+        var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
+
+        var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        var fragmentShaderSource = getFragmentShaderSource(effectSource, speed, resolution, depth);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader);
+
+        if (shaderProgram) {
+            gl.deleteProgram(shaderProgram);
+        }
+
+        shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+            return;
+        }
+
+        gl.useProgram(shaderProgram);
+
+        positionLocation = gl.getAttribLocation(shaderProgram, 'position');
+        iResolutionLocation = gl.getUniformLocation(shaderProgram, 'iResolution');
+        iTimeLocation = gl.getUniformLocation(shaderProgram, 'iTime');
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        var positions = [
+            -1.0, -1.0, 1.0, -1.0, -1.0,  1.0,
+            -1.0,  1.0, 1.0, -1.0,  1.0,  1.0
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(positionLocation);
+
+        resizeCanvasToDisplaySize();
+    }
+
+    function render(time) {
+        if (resizeCanvasToDisplaySize()) {
+            gl.uniform2f(iResolutionLocation, gl.canvas.width, gl.canvas.height);
+        }
+
+        gl.uniform1f(iTimeLocation, time * 0.001);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
+    }
+
+    function update() {
+      event.preventDefault();
+      createShaderProgram(
+        document.getElementById('effectSource').value,
+        document.getElementById('speed').value,
+        document.getElementById('resolution').value,
+        document.getElementById('depth').value
+      );
+    }
+    document.getElementById('speed').addEventListener('change', update);
+    document.getElementById('resolution').addEventListener('change', update);
+    document.getElementById('depth').addEventListener('change', update);
+    document.getElementById('shaderForm').addEventListener('submit', update);
+
+    // Initial setup
+    createShaderProgram(
+        document.getElementById('effectSource').value,
+        document.getElementById('speed').value,
+        document.getElementById('resolution').value,
+        document.getElementById('depth').value
+    );
+    requestAnimationFrame(render);
+</script>
+</body>
+</html>
