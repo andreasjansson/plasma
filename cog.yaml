@@ -1,0 +1,14 @@
+build:
+  gpu: true
+  system_packages:
+    - "cmake"
+    - "g++"
+    - "build-essential"
+  python_version: "3.11"
+  # a list of packages in the format <package-name>==<version>
+  run:
+    - "CMAKE_ARGS='-DLLAMA_CUBLAS=on' FORCE_CMAKE=1 pip install llama-cpp-python==0.2.6 --no-cache-dir"
+    - "mkdir -p /models"
+    - "curl -o /usr/local/bin/pget -L 'https://github.com/replicate/pget/releases/download/v0.1.1/pget' && chmod +x /usr/local/bin/pget"
+
+predict: "predict.py:Predictor"
