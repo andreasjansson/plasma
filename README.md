@@ -2,7 +2,7 @@
 
 _Plasma shader generator_
 
-[https://replicate.com/andreasjansson/plasma](![Run on Replicate](https://replicate.com/andreasjansson/plasma/badge))
+[![Run on Replicate](https://replicate.com/andreasjansson/plasma/badge)](https://replicate.com/andreasjansson/plasma)
 
 ![screenshot](https://github.com/andreasjansson/plasma/assets/713993/75d96130-74bc-47b2-804a-cfaddeea15ef)
 
