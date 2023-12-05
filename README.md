@@ -2,7 +2,7 @@
 
 _Plasma shader generator_
 
-![Run on Replicate](https://replicate.com/andreasjansson/plasma/badge)
+[https://replicate.com/andreasjansson/plasma](![Run on Replicate](https://replicate.com/andreasjansson/plasma/badge))
 
 ![screenshot](https://tjzk.replicate.delivery/models_models_cover_image/4754cd33-9599-4fde-88ab-b4498c610253/cap.gif)
 
