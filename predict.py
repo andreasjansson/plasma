@@ -94,6 +94,24 @@ vec2 effect(vec2 p, float i, float time) {
     return vec2(cos(p.x * i + time), sin(p.y * i + time)) * vec2(sin(length(p) * i + time), cos(length(p) * i - time)) / i;
 }
 
+// Asymetric ripple
+
+vec2 effect(vec2 p, float i, float time) {
+    return vec2(sin(length(p) * i + time) / (i + 0.3), cos(length(p) * i + time) / (i + 0.7));
+}
+
+// Rotational twist
+
+vec2 effect(vec2 p, float i, float time) {
+    return vec2(cos(i * (p.x + 0.4) + time), sin(i * (p.y - 0.3) + time));
+}
+
+// Elliptical orbit
+
+vec2 effect(vec2 p, float i, float time) {
+    return vec2(sin(length(p) * 0.5 * i + time), cos(length(p) * 2.0 * i + time)) / i;
+}
+
 ---
 
 Generate a new effect function.[/INST]"""

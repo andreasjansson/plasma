@@ -8,7 +8,9 @@ _Plasma shader generator_
 
 This model uses CodeLlama 7B-instruct with Llama.cpp grammars to generate equations that create plasma shader effects. Refer to the source code for the full grammar and prompt.
 
-Take the generated `effect()` function and replace the `effect()` function in the snippet below. Then copy the whole code snippet into https://www.shadertoy.com/new and hit ▶Compile.
+To see the plasma in action, you can either use [this interactive viewer](https://andreasjansson.github.io/plasma/) or ShaderToy.
+
+With ShaderToy you can tweak the colors and everything else. Take the generated `effect()` function and replace the `effect()` function in the snippet below. Then copy the whole code snippet into https://www.shadertoy.com/new and hit ▶Compile.
 
 ```c
 float resolution = 3.0;
